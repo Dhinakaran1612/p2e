@@ -1,7 +1,12 @@
 const asyncHandler = require("express-async-handler");
 const moment = require("moment-timezone");
 const Event = require("../models/event.model");
-const config = require("../config/config");
+const {
+  STARTHOURS,
+  ENDHOURS,
+  DURATION,
+  TIMEZONE,
+} = require("../config/config");
 
 const createEvent = asyncHandler(async (req, res) => {
   const { dateTime, duration } = req.body;
@@ -17,7 +22,7 @@ const createEvent = asyncHandler(async (req, res) => {
   await Event.create({ dateTime, duration });
 
   return res
-    .status(200)
+    .status(201)
     .json({ success: true, message: "Event created successfully." });
 });
 
@@ -32,16 +37,16 @@ const getEvents = asyncHandler(async (req, res) => {
     dateTime: { $gte: new Date(startDate), $lt: new Date(endDate) },
   });
 
-  return res.status(201).json({ success: true, list: events });
+  return res.status(200).json({ success: true, list: events });
 });
 
 const freeSlots = asyncHandler(async (req, res) => {
-  const { date, timeZone = config.timeZone } = req.query;
+  const { date, timeZone = TIMEZONE } = req.query;
 
   const targetDate = moment.tz(date, timeZone);
 
-  const startDate = targetDate.clone().startOf("day").hour(config.startHours);
-  const endDate = targetDate.clone().startOf("day").hour(config.endHours);
+  const startDate = targetDate.clone().startOf("day").hour(STARTHOURS);
+  const endDate = targetDate.clone().startOf("day").hour(ENDHOURS);
 
   const occupiedSlots = await Event.find({
     dateTime: {
@@ -64,10 +69,10 @@ const freeSlots = asyncHandler(async (req, res) => {
       freeSlots.push(moment(slotInTimezone));
     }
 
-    currentSlot.add(config.duration, "minutes");
+    currentSlot.add(DURATION, "minutes");
   }
 
-  return res.status(201).json({ success: true, list: freeSlots });
+  return res.status(200).json({ success: true, list: freeSlots });
 });
 
 module.exports = {

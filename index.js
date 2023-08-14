@@ -1,14 +1,25 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
 
 const app = express();
-const port = process.env.PORT || 3000;
 
+const { PORT, MONGO_URI } = require("./src/config/config");
+
+const corsOption = {
+  origin: "*",
+  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+  preflightContinue: false,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOption));
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 // MongoDB connection
 mongoose
-  .connect("mongodb://0.0.0.0:27017/calendar", {
+  .connect(MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
@@ -28,12 +39,12 @@ app.use((req, res) => {
   return res.status(404).json({
     success: false,
     message: `${req.method} - ${req.protocol}://${req.hostname}${
-      req.hostname == "localhost" ? `:${port}` : ""
+      req.hostname == "localhost" ? `:${PORT}` : ""
     }${req.originalUrl} - Route not found!`,
   });
 });
 
 // Start the server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
